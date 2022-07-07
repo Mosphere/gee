@@ -9,11 +9,12 @@ import (
 func main() {
 	r := gee.New()
 
-	r.Get("/", indexHandler)
+	//r.Get("/", indexHandler)
+	r.Get("/hello", func(c *gee.Context) {
+		fmt.Println("test:")
+		c.String(http.StatusOK, "hello %s, you are at %s\n", c.Query("name"), c.Path)
+		//c.Html(http.StatusOK, "<p>hello</p>")
+	})
 
 	r.Run(":80")
-}
-
-func indexHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "URL.Path = %q\n", req.URL.Path)
 }

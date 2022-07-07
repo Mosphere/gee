@@ -1,30 +1,30 @@
 package gee
 
 import (
-	"fmt"
 	"net/http"
 )
 
+type HandlerFunc func(*Context)
+
 type Engine struct {
-	router map[string]http.HandlerFunc
+	router *Router
 }
 
 func New() *Engine {
-	return &Engine{router: make(map[string]http.HandlerFunc)}
+	return &Engine{router: newRouter()}
 }
 
-func (engine *Engine) addRoute(method, pattern string, handler http.HandlerFunc) {
-	key := method + "-" + pattern
-	engine.router[key] = handler
+func (engine *Engine) addRoute(method, pattern string, handler HandlerFunc) {
+	engine.router.addRoute(method, pattern, handler)
 }
 
 //Get defines the method to add get route
-func (engine *Engine) Get(pattern string, handler http.HandlerFunc) {
+func (engine *Engine) Get(pattern string, handler HandlerFunc) {
 	engine.addRoute("GET", pattern, handler)
 }
 
 //Post defines the method to add post route
-func (engine *Engine) Post(pattern string, handler http.HandlerFunc) {
+func (engine *Engine) Post(pattern string, handler HandlerFunc) {
 	engine.addRoute("POST", pattern, handler)
 }
 
@@ -35,10 +35,6 @@ func (engine *Engine) Run(addr string) error {
 
 //ServerHTTP implents the method ServerHTTP in http.Handler interface
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	key := req.Method + "-" + req.URL.Path
-	if handler, ok := engine.router[key]; ok {
-		handler(w, req)
-	} else {
-		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)
-	}
+	c := NewContext(w, req)
+	engine.router.handle(c)
 }
