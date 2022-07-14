@@ -11,6 +11,7 @@ type Context struct {
 	Req        *http.Request
 	Path       string
 	Method     string
+	Params     map[string]string
 	StatusCode int
 }
 
@@ -65,4 +66,11 @@ func (c *Context) Html(code int, html string) {
 func (c *Context) Data(code int, data []byte) {
 	c.Status(code)
 	c.Writer.Write(data)
+}
+
+func (c *Context) Param(key string) string {
+	if val, ok := c.Params[key]; ok {
+		return val
+	}
+	return ""
 }
