@@ -10,9 +10,11 @@ type node struct {
 }
 
 func (n *node) matchChild(part string) *node {
-	for _, child := range n.Children {
-		if child.Part == part || child.IsWild {
-			return child
+	if len(n.Children) > 0 {
+		for _, child := range n.Children {
+			if child.Part == part || child.IsWild {
+				return child
+			}
 		}
 	}
 	return nil
@@ -20,9 +22,11 @@ func (n *node) matchChild(part string) *node {
 
 func (n *node) matchChildren(part string) []*node {
 	nodes := make([]*node, 0)
-	for _, child := range n.Children {
-		if child.Part == part || child.IsWild {
-			nodes = append(nodes, child)
+	if len(n.Children) > 0 {
+		for _, child := range n.Children {
+			if child.Part == part || child.IsWild {
+				nodes = append(nodes, child)
+			}
 		}
 	}
 	return nodes

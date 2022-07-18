@@ -29,10 +29,15 @@ func parsePattern(pattern string) []string {
 	}
 	return parts
 }
+
 func (r *Router) addRoute(method, pattern string, handler HandlerFunc) {
 	parts := parsePattern(pattern)
-	node := r.roots[method]
-	node.Insert(pattern, parts, 0)
+	_, ok := r.roots[method]
+	if !ok {
+		r.roots[method] = &node{}
+	}
+	n := r.roots[method]
+	n.Insert(pattern, parts, 0)
 	key := method + "-" + pattern
 	r.handlers[key] = handler
 }
