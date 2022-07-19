@@ -6,26 +6,42 @@ import (
 
 type HandlerFunc func(*Context)
 
-type Engine struct {
-	router *Router
+type RouterGroup struct {
+	prefix      string
+	middlewares []HandlerFunc
+	router      *Router
 }
 
-func New() *Engine {
-	return &Engine{router: newRouter()}
+func (group *RouterGroup) Group(prefix string) *RouterGroup {
+	return &RouterGroup{
+		prefix: group.prefix + prefix,
+		router: group.router,
+	}
 }
 
-func (engine *Engine) addRoute(method, pattern string, handler HandlerFunc) {
-	engine.router.addRoute(method, pattern, handler)
+func (group *RouterGroup) addRoute(method, pattern string, handler HandlerFunc) {
+	pattern = group.prefix + pattern
+	group.router.addRoute(method, pattern, handler)
 }
 
 //Get defines the method to add get route
-func (engine *Engine) Get(pattern string, handler HandlerFunc) {
-	engine.addRoute("GET", pattern, handler)
+func (group *RouterGroup) Get(pattern string, handler HandlerFunc) {
+	group.addRoute("GET", pattern, handler)
 }
 
 //Post defines the method to add post route
-func (engine *Engine) Post(pattern string, handler HandlerFunc) {
-	engine.addRoute("POST", pattern, handler)
+func (group *RouterGroup) Post(pattern string, handler HandlerFunc) {
+	group.addRoute("POST", pattern, handler)
+}
+
+type Engine struct {
+	*RouterGroup
+}
+
+func New() *Engine {
+	engine := &Engine{}
+	engine.RouterGroup = &RouterGroup{router: newRouter()}
+	return engine
 }
 
 //Run defines the method to start a http server
