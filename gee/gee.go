@@ -2,6 +2,7 @@ package gee
 
 import (
 	"net/http"
+	"strings"
 )
 
 type HandlerFunc func(*Context)
@@ -9,19 +10,23 @@ type HandlerFunc func(*Context)
 type RouterGroup struct {
 	prefix      string
 	middlewares []HandlerFunc
-	router      *Router
+	engine      *Engine
+	//router      *Router
 }
 
-func (group *RouterGroup) Group(prefix string) *RouterGroup {
-	return &RouterGroup{
-		prefix: group.prefix + prefix,
-		router: group.router,
+// Group is defined to create a new RouterGroup
+func (engine *Engine) Group(prefix string) *RouterGroup {
+	routerGroup := &RouterGroup{
+		engine: engine,
+		prefix: prefix,
 	}
+	engine.groups = append(engine.groups, routerGroup)
+	return routerGroup
 }
 
 func (group *RouterGroup) addRoute(method, pattern string, handler HandlerFunc) {
 	pattern = group.prefix + pattern
-	group.router.addRoute(method, pattern, handler)
+	group.engine.router.addRoute(method, pattern, handler)
 }
 
 //Get defines the method to add get route
@@ -34,13 +39,19 @@ func (group *RouterGroup) Post(pattern string, handler HandlerFunc) {
 	group.addRoute("POST", pattern, handler)
 }
 
+func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
+	group.middlewares = append(group.middlewares, middlewares...)
+}
+
 type Engine struct {
-	*RouterGroup
+	groups []*RouterGroup
+	router *Router
 }
 
 func New() *Engine {
-	engine := &Engine{}
-	engine.RouterGroup = &RouterGroup{router: newRouter()}
+	engine := &Engine{
+		router: newRouter(),
+	}
 	return engine
 }
 
@@ -51,6 +62,13 @@ func (engine *Engine) Run(addr string) error {
 
 //ServerHTTP implents the method ServerHTTP in http.Handler interface
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var middlewares []HandlerFunc
+	for _, group := range engine.groups {
+		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
+		}
+	}
 	c := NewContext(w, req)
+	c.handlers = middlewares
 	engine.router.handle(c)
 }
