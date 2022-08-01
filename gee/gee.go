@@ -15,7 +15,8 @@ type RouterGroup struct {
 }
 
 // Group is defined to create a new RouterGroup
-func (engine *Engine) Group(prefix string) *RouterGroup {
+func (group *RouterGroup) Group(prefix string) *RouterGroup {
+	engine := group.engine
 	routerGroup := &RouterGroup{
 		engine: engine,
 		prefix: prefix,
@@ -44,6 +45,7 @@ func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
 }
 
 type Engine struct {
+	*RouterGroup
 	groups []*RouterGroup
 	router *Router
 }
@@ -52,6 +54,15 @@ func New() *Engine {
 	engine := &Engine{
 		router: newRouter(),
 	}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
+	return engine
+}
+
+func Default() *Engine {
+	engine := New()
+	engine.Use(Logger())
+	engine.Use(Recovery())
 	return engine
 }
 
