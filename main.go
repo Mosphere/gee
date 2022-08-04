@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"geeweb/gee"
 	"net/http"
-	"strings"
 )
 
 func main() {
@@ -18,17 +17,11 @@ func main() {
 	v1.Use(gee.V1())
 	{
 		v1.Get("/hello", func(c *gee.Context) {
-			//fmt.Println("test...")
-			parsePattern(c.Path)
+			fmt.Println("hello")
 			c.String(http.StatusOK, "hello %s, you are at %s\n", c.Query("name"), c.Path)
 
 		})
 	}
 
 	r.Run(":80")
-}
-
-func parsePattern(path string) {
-	arr := strings.Split(path, "/")
-	fmt.Println(arr)
 }
